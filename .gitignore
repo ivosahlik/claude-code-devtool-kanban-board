@@ -7,3 +7,7 @@ dist/
 
 # persisted runtime state — keep file present, ignore changes
 server/data/board.json
+
+# software factory runtime state and job worktrees
+/factory/jobs/
+/.worktrees/
