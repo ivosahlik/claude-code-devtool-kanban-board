@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { navigate } from "@/hooks/useHashRoute";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 type DialogState =
   | { mode: "closed" }
@@ -22,6 +23,7 @@ export function Projects() {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>({ mode: "closed" });
+  useDocumentTitle("Projects · Kanban");
 
   const refresh = useCallback(async () => {
     try {
