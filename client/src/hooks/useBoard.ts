@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
-import { api, type Board, type Card } from "@/lib/api";
+import { api, ApiError, type Board, type Card } from "@/lib/api";
 
 type State = {
   board: Board | null;
   loading: boolean;
   error: string | null;
+  notFound: boolean;
 };
 
 export function useBoard(projectId: string) {
@@ -12,23 +13,25 @@ export function useBoard(projectId: string) {
     board: null,
     loading: true,
     error: null,
+    notFound: false,
   });
 
   const refresh = useCallback(async () => {
     try {
       const board = await api.getBoard(projectId);
-      setState({ board, loading: false, error: null });
+      setState({ board, loading: false, error: null, notFound: false });
     } catch (e) {
       setState({
         board: null,
         loading: false,
         error: e instanceof Error ? e.message : "failed to load board",
+        notFound: e instanceof ApiError && e.status === 404,
       });
     }
   }, [projectId]);
 
   useEffect(() => {
-    setState({ board: null, loading: true, error: null });
+    setState({ board: null, loading: true, error: null, notFound: false });
     void refresh();
   }, [refresh]);
 
