@@ -81,7 +81,7 @@ export function Projects() {
                     Created {new Date(p.createdAt).toLocaleDateString()}
                   </div>
                 </button>
-                <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                <div className="flex items-center gap-1 opacity-100 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 sm:[@media(hover:hover)]:opacity-0">
                   <Button
                     size="icon"
                     variant="ghost"
