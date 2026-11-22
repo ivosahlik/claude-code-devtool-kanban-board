@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
-import { api, ApiError, type Board, type Card } from "@/lib/api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { api, ApiError, errorMessage, type Board, type Card } from "@/lib/api";
+import { useErrorNotice } from "@/hooks/useErrorNotice";
 
 type State = {
   board: Board | null;
@@ -15,8 +16,15 @@ export function useBoard(projectId: string) {
     error: null,
     notFound: false,
   });
+  const notify = useErrorNotice();
+  const boardRef = useRef<Board | null>(null);
 
-  const refresh = useCallback(async () => {
+  useEffect(() => {
+    boardRef.current = state.board;
+  }, [state.board]);
+
+  // Initial load: failures replace the board with the full-page error view.
+  const load = useCallback(async () => {
     try {
       const board = await api.getBoard(projectId);
       setState({ board, loading: false, error: null, notFound: false });
@@ -32,8 +40,18 @@ export function useBoard(projectId: string) {
 
   useEffect(() => {
     setState({ board: null, loading: true, error: null, notFound: false });
-    void refresh();
-  }, [refresh]);
+    void load();
+  }, [load]);
+
+  // Reload after an action: failures keep the current board and show a notice.
+  const refresh = useCallback(async () => {
+    try {
+      const board = await api.getBoard(projectId);
+      setState({ board, loading: false, error: null, notFound: false });
+    } catch (e) {
+      notify(errorMessage(e));
+    }
+  }, [projectId, notify]);
 
   const createColumn = useCallback(
     async (title: string) => {
@@ -80,20 +98,28 @@ export function useBoard(projectId: string) {
 
   const moveCardOptimistic = useCallback(
     async (cardId: string, toColumnId: string) => {
-      setState((prev) => {
-        if (!prev.board) return prev;
-        const cards = prev.board.cards.map((c) =>
-          c.id === cardId ? { ...c, columnId: toColumnId } : c,
-        );
-        return { ...prev, board: { ...prev.board, cards } };
-      });
+      const fromColumnId = boardRef.current?.cards.find(
+        (c) => c.id === cardId,
+      )?.columnId;
+      const setCardColumn = (columnId: string) =>
+        setState((prev) => {
+          if (!prev.board) return prev;
+          const cards = prev.board.cards.map((c) =>
+            c.id === cardId ? { ...c, columnId } : c,
+          );
+          return { ...prev, board: { ...prev.board, cards } };
+        });
+      setCardColumn(toColumnId);
       try {
         await api.updateCard(projectId, cardId, { columnId: toColumnId });
-      } finally {
-        await refresh();
+      } catch (e) {
+        if (fromColumnId) setCardColumn(fromColumnId);
+        notify(errorMessage(e));
+        return;
       }
+      await refresh();
     },
-    [projectId, refresh],
+    [projectId, refresh, notify],
   );
 
   const deleteCard = useCallback(
