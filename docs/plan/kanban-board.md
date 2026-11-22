@@ -49,6 +49,7 @@ Types are duplicated in `client/src`, `server/src/types.ts` and `cli/src/types.t
 - Hash routing: `#/projects/<id>` shows a board, anything else shows the project list
 - Per-page browser tab titles: `Projects · Kanban` on the list, `<project name> · Kanban` on a board, `Kanban` while a board loads
 - A "Project not found" state with a back button when a board URL points at an unknown or deleted project
+- Layout at phone width (below 640px): the board shows one column per screen, snaps between columns on swipe, and truncates long project names in the header
 - CLI covering the same operations against the running server
 
 ## API Routes
