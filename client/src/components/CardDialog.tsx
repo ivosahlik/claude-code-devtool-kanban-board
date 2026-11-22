@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -33,6 +34,9 @@ export function CardDialog({
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  // Captured on open so the message keeps the saved title while the dialogs close.
+  const [confirmTitle, setConfirmTitle] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -92,14 +96,9 @@ export function CardDialog({
                 <Button
                   type="button"
                   variant="destructive"
-                  onClick={async () => {
-                    setSubmitting(true);
-                    try {
-                      await onDelete();
-                      onOpenChange(false);
-                    } finally {
-                      setSubmitting(false);
-                    }
+                  onClick={() => {
+                    setConfirmTitle(initialTitle);
+                    setConfirmOpen(true);
                   }}
                   disabled={submitting}
                 >
@@ -122,6 +121,18 @@ export function CardDialog({
             </div>
           </DialogFooter>
         </form>
+        {mode === "edit" && onDelete && (
+          <ConfirmDialog
+            open={confirmOpen}
+            onOpenChange={setConfirmOpen}
+            title="Delete card?"
+            description={`"${confirmTitle}" will be permanently deleted.`}
+            onConfirm={async () => {
+              await onDelete();
+              onOpenChange(false);
+            }}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

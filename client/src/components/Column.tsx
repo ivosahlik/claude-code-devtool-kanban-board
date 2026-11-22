@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "./Card";
 import { CardDialog } from "./CardDialog";
 import { ColumnDialog } from "./ColumnDialog";
+import { ConfirmDialog } from "./ConfirmDialog";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -35,6 +36,7 @@ export function Column({
   const [draft, setDraft] = useState("");
   const [createError, setCreateError] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CardType | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const addButtonRef = useRef<HTMLButtonElement>(null);
@@ -52,13 +54,10 @@ export function Column({
 
   const sorted = [...cards].sort((a, b) => a.order - b.order);
 
-  const handleDeleteColumn = async () => {
-    const confirmed = window.confirm(
-      `Delete column "${column.title}" and all its cards?`,
-    );
-    if (!confirmed) return;
-    await onDeleteColumn(column.id);
-  };
+  const deleteDescription =
+    cards.length === 0
+      ? `"${column.title}" will be permanently deleted. It has no cards.`
+      : `"${column.title}" and its ${cards.length} ${cards.length === 1 ? "card" : "cards"} will be permanently deleted.`;
 
   useEffect(() => {
     if (!adding && refocusAddButtonRef.current) {
@@ -143,7 +142,7 @@ export function Column({
             size="icon"
             variant="ghost"
             className="h-7 w-7 text-destructive hover:text-destructive"
-            onClick={handleDeleteColumn}
+            onClick={() => setDeleteOpen(true)}
             aria-label="Delete column"
           >
             <Trash2 className="h-3.5 w-3.5" />
@@ -214,6 +213,14 @@ export function Column({
         mode="edit"
         initialTitle={column.title}
         onSubmit={(title) => onRenameColumn(column.id, title)}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete column?"
+        description={deleteDescription}
+        onConfirm={() => onDeleteColumn(column.id)}
       />
     </div>
   );

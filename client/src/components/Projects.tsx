@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { navigate } from "@/hooks/useHashRoute";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
@@ -23,6 +24,9 @@ export function Projects() {
   const [projects, setProjects] = useState<Project[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [dialog, setDialog] = useState<DialogState>({ mode: "closed" });
+  // Kept after close so the confirm text doesn't blank during the close animation.
+  const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   useDocumentTitle("Projects · Kanban");
 
   const refresh = useCallback(async () => {
@@ -38,12 +42,9 @@ export function Projects() {
     void refresh();
   }, [refresh]);
 
-  const handleDelete = async (project: Project) => {
-    const ok = window.confirm(
-      `Delete project "${project.name}" and its board?`,
-    );
-    if (!ok) return;
-    await api.deleteProject(project.id);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await api.deleteProject(deleteTarget.id);
     await refresh();
   };
 
@@ -102,7 +103,8 @@ export function Projects() {
                     className="h-7 w-7 text-destructive hover:text-destructive"
                     onClick={(e) => {
                       e.stopPropagation();
-                      void handleDelete(p);
+                      setDeleteTarget(p);
+                      setDeleteOpen(true);
                     }}
                     aria-label="Delete project"
                   >
@@ -126,6 +128,14 @@ export function Projects() {
           }
           await refresh();
         }}
+      />
+
+      <ConfirmDialog
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+        title="Delete project?"
+        description={`"${deleteTarget?.name ?? ""}" and its board will be permanently deleted.`}
+        onConfirm={handleDelete}
       />
     </div>
   );

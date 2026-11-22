@@ -17,7 +17,7 @@ Single-user, multi-project Kanban board with a React frontend, an Express backen
 kanban-board/
 ├── client/
 │   ├── src/
-│   │   ├── components/   # Projects, Board, Column, Card, CardDialog, ColumnDialog, ui/ (shadcn)
+│   │   ├── components/   # Projects, Board, Column, Card, CardDialog, ColumnDialog, ConfirmDialog, ui/ (shadcn)
 │   │   ├── hooks/        # useBoard (data + mutations), useHashRoute (routing)
 │   │   └── lib/          # api.ts (fetch wrapper), utils.ts
 │   └── vite.config.ts    # proxies /api → localhost:${PORT ?? 3001}
@@ -45,6 +45,7 @@ Types are duplicated in `client/src`, `server/src/types.ts` and `cli/src/types.t
 - Projects: list, create, rename, delete (deleting a project deletes its board)
 - Columns per project: create, rename, delete (deleting a column deletes its cards; remaining columns are re-ordered)
 - Cards with title + description: create from an inline title input at the bottom of the column (Enter adds, Escape or clicking away closes), add descriptions and edit or delete in the edit dialog
+- Deleting a project, column or card first asks for confirmation in a styled dialog (Cancel has initial focus); the column prompt shows how many cards will be deleted
 - Drag-and-drop to move and reorder cards, with optimistic UI updates reconciled against the server response
 - Hash routing: `#/projects/<id>` shows a board, anything else shows the project list
 - Per-page browser tab titles: `Projects · Kanban` on the list, `<project name> · Kanban` on a board, `Kanban` while a board loads
