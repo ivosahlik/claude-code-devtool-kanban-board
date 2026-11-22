@@ -47,6 +47,8 @@ Types are duplicated in `client/src`, `server/src/types.ts` and `cli/src/types.t
 - Cards with title + description: create, edit, delete
 - Drag-and-drop to move and reorder cards, with optimistic UI updates reconciled against the server response
 - Hash routing: `#/projects/<id>` shows a board, anything else shows the project list
+- Per-page browser tab titles: `Projects · Kanban` on the list, `<project name> · Kanban` on a board, `Kanban` while a board loads
+- A "Project not found" state with a back button when a board URL points at an unknown or deleted project
 - CLI covering the same operations against the running server
 
 ## API Routes

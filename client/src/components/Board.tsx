@@ -10,6 +10,7 @@ import { ArrowLeft, Plus } from "lucide-react";
 import { useBoard } from "@/hooks/useBoard";
 import { api, type Project } from "@/lib/api";
 import { navigate } from "@/hooks/useHashRoute";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Button } from "@/components/ui/button";
 import { Column } from "./Column";
 import { ColumnDialog } from "./ColumnDialog";
@@ -23,6 +24,7 @@ export function Board({ projectId }: Props) {
     board,
     loading,
     error,
+    notFound,
     createColumn,
     renameColumn,
     deleteColumn,
@@ -48,6 +50,18 @@ export function Board({ projectId }: Props) {
     };
   }, [projectId]);
 
+  // Ignore a name left over from the previous projectId until the lookup for
+  // the current one resolves.
+  const projectName = project?.id === projectId ? project.name : null;
+
+  useDocumentTitle(
+    notFound
+      ? "Project not found · Kanban"
+      : !loading && !error && projectName
+        ? `${projectName} · Kanban`
+        : "Kanban",
+  );
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
   );
@@ -68,6 +82,24 @@ export function Board({ projectId }: Props) {
     return (
       <div className="flex h-screen items-center justify-center text-muted-foreground">
         Loading board…
+      </div>
+    );
+  }
+  if (notFound) {
+    return (
+      <div className="flex h-screen flex-col items-center justify-center gap-4 text-center">
+        <div className="space-y-1">
+          <h1 className="text-lg font-semibold tracking-tight">
+            Project not found
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            It may have been deleted, or the link is wrong.
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/")}>
+          <ArrowLeft className="h-4 w-4" />
+          Back to projects
+        </Button>
       </div>
     );
   }
@@ -100,7 +132,7 @@ export function Board({ projectId }: Props) {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-lg font-semibold tracking-tight">
-            {project?.name ?? "Kanban Board"}
+            {projectName ?? "Kanban Board"}
           </h1>
         </div>
         <Button size="sm" onClick={() => setNewColumnOpen(true)}>

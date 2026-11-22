@@ -23,6 +23,16 @@ export type Project = {
   createdAt: string;
 };
 
+export class ApiError extends Error {
+  status: number;
+
+  constructor(status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
 async function request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   const res = await fetch(input, {
     ...init,
@@ -33,7 +43,7 @@ async function request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
   });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+    throw new ApiError(res.status, `${res.status} ${res.statusText}: ${text}`);
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
