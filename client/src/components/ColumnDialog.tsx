@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { errorMessage } from "@/lib/api";
 
 type Props = {
   open: boolean;
@@ -27,18 +28,25 @@ export function ColumnDialog({
 }: Props) {
   const [title, setTitle] = useState(initialTitle);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (open) setTitle(initialTitle);
+    if (open) {
+      setTitle(initialTitle);
+      setError(null);
+    }
   }, [open, initialTitle]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
     setSubmitting(true);
+    setError(null);
     try {
       await onSubmit(title.trim());
       onOpenChange(false);
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -63,11 +71,19 @@ export function ColumnDialog({
             <Input
               id="column-title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setError(null);
+              }}
               autoFocus
               required
             />
           </div>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <DialogFooter>
             <Button
               type="button"

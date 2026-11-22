@@ -33,17 +33,46 @@ export class ApiError extends Error {
   }
 }
 
+const UNREACHABLE = "Could not reach the server";
+
+export function errorMessage(e: unknown): string {
+  return e instanceof Error ? e.message : "Something went wrong";
+}
+
+function fallbackMessage(status: number): string {
+  if (status === 502 || status === 503 || status === 504) return UNREACHABLE;
+  if (status >= 500) return `Server error (${status})`;
+  return `Request failed (${status})`;
+}
+
+async function readError(res: Response): Promise<string> {
+  try {
+    const body: unknown = await res.json();
+    if (body && typeof body === "object" && "error" in body) {
+      const { error } = body;
+      if (typeof error === "string" && error.trim()) return error;
+    }
+  } catch {
+    // Empty or non-JSON body: use the status fallback.
+  }
+  return fallbackMessage(res.status);
+}
+
 async function request<T>(input: RequestInfo, init?: RequestInit): Promise<T> {
-  const res = await fetch(input, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers ?? {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(input, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        ...(init?.headers ?? {}),
+      },
+    });
+  } catch {
+    throw new ApiError(0, UNREACHABLE);
+  }
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new ApiError(res.status, `${res.status} ${res.statusText}: ${text}`);
+    throw new ApiError(res.status, await readError(res));
   }
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;

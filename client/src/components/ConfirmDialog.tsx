@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { errorMessage } from "@/lib/api";
 
 type Props = {
   open: boolean;
@@ -28,8 +29,13 @@ export function ConfirmDialog({
   onConfirm,
 }: Props) {
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   // Radix returns focus to a DialogTrigger, which callers don't use; restore it to the opener instead.
   const openerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (open) setError(null);
+  }, [open]);
 
   // Escape, overlay clicks and the X all land here; ignore them while busy.
   const handleOpenChange = (next: boolean) => {
@@ -39,11 +45,12 @@ export function ConfirmDialog({
 
   const handleConfirm = async () => {
     setBusy(true);
+    setError(null);
     try {
       await onConfirm();
       onOpenChange(false);
     } catch (e) {
-      console.error(e);
+      setError(errorMessage(e));
     } finally {
       setBusy(false);
     }
@@ -64,6 +71,11 @@ export function ConfirmDialog({
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
+        {error && (
+          <p role="alert" className="text-center text-sm text-destructive sm:text-left">
+            {error}
+          </p>
+        )}
         <DialogFooter>
           <Button
             type="button"

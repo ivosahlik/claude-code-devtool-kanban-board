@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { api, type Project } from "@/lib/api";
+import { api, errorMessage, type Project } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +14,7 @@ import {
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { navigate } from "@/hooks/useHashRoute";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useErrorNotice } from "@/hooks/useErrorNotice";
 
 type DialogState =
   | { mode: "closed" }
@@ -27,9 +28,11 @@ export function Projects() {
   // Kept after close so the confirm text doesn't blank during the close animation.
   const [deleteTarget, setDeleteTarget] = useState<Project | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const notify = useErrorNotice();
   useDocumentTitle("Projects · Kanban");
 
-  const refresh = useCallback(async () => {
+  // Initial load: failures show the inline error line.
+  const load = useCallback(async () => {
     try {
       setProjects(await api.listProjects());
       setError(null);
@@ -39,8 +42,18 @@ export function Projects() {
   }, []);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void load();
+  }, [load]);
+
+  // Reload after an action: failures keep the current list and show a notice.
+  const refresh = useCallback(async () => {
+    try {
+      setProjects(await api.listProjects());
+      setError(null);
+    } catch (e) {
+      notify(errorMessage(e));
+    }
+  }, [notify]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -150,19 +163,24 @@ type ProjectDialogProps = {
 function ProjectDialog({ state, onOpenChange, onSubmit }: ProjectDialogProps) {
   const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (state.mode === "edit") setName(state.project.name);
     else if (state.mode === "create") setName("");
+    setError(null);
   }, [state]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
     setSubmitting(true);
+    setError(null);
     try {
       await onSubmit(name.trim());
       onOpenChange(false);
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -191,11 +209,19 @@ function ProjectDialog({ state, onOpenChange, onSubmit }: ProjectDialogProps) {
             <Input
               id="project-name"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) => {
+                setName(e.target.value);
+                setError(null);
+              }}
               autoFocus
               required
             />
           </div>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <DialogFooter>
             <Button
               type="button"
