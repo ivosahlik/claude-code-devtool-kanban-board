@@ -141,7 +141,7 @@ export function Column({
           <Button
             size="icon"
             variant="ghost"
-            className="h-7 w-7 text-destructive hover:text-destructive"
+            className="h-7 w-7 text-destructive-text hover:text-destructive-text"
             onClick={() => setDeleteOpen(true)}
             aria-label="Delete column"
           >
@@ -173,7 +173,7 @@ export function Column({
             className="bg-background"
           />
           {createError && (
-            <p role="alert" className="mt-1 text-xs text-destructive">
+            <p role="alert" className="mt-1 text-xs text-destructive-text">
               Could not add card
             </p>
           )}

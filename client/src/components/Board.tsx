@@ -105,7 +105,7 @@ export function Board({ projectId }: Props) {
   }
   if (error) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 text-destructive">
+      <div className="flex h-screen flex-col items-center justify-center gap-4 text-destructive-text">
         <div>{error}</div>
         <Button variant="outline" onClick={() => navigate("/")}>
           <ArrowLeft className="h-4 w-4" />
