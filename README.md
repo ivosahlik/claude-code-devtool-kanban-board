@@ -17,6 +17,7 @@ npm run dev
 - Columns: create / rename / delete
 - Cards:   create / edit / delete, with inline quick-add at the bottom of each column
 - Drag-and-drop cards between columns
+- Layout at phone width: the board shows one column per screen, snaps between columns on swipe, and truncates long project names
 - State persisted to `server/data/db.json`
 
 ## CLI

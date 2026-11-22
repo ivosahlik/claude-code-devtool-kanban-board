@@ -119,31 +119,36 @@ export function Board({ projectId }: Props) {
   const columns = [...board.columns].sort((a, b) => a.order - b.order);
 
   return (
-    <div className="flex h-screen flex-col">
-      <header className="flex items-center justify-between border-b bg-background px-6 py-3">
-        <div className="flex items-center gap-3">
+    <div className="flex h-screen supports-[height:100dvh]:h-dvh flex-col">
+      <header className="flex items-center justify-between gap-3 border-b bg-background px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
           <Button
             size="icon"
             variant="ghost"
-            className="h-8 w-8"
+            className="h-8 w-8 shrink-0"
             onClick={() => navigate("/")}
             aria-label="Back to projects"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-lg font-semibold tracking-tight">
+          <h1 className="min-w-0 truncate text-lg font-semibold tracking-tight">
             {projectName ?? "Kanban Board"}
           </h1>
         </div>
-        <Button size="sm" onClick={() => setNewColumnOpen(true)}>
+        <Button
+          size="sm"
+          className="shrink-0 px-2 sm:px-3"
+          onClick={() => setNewColumnOpen(true)}
+          aria-label="Add column"
+        >
           <Plus className="h-4 w-4" />
-          Add column
+          <span className="hidden sm:inline">Add column</span>
         </Button>
       </header>
 
       <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-        <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
-          <div className="flex h-full gap-4 items-stretch">
+        <div className="flex-1 overflow-x-auto overflow-y-hidden p-4 sm:p-6 snap-x snap-mandatory scroll-px-4 sm:snap-none sm:scroll-px-0">
+          <div className="flex h-full gap-3 sm:gap-4 items-stretch">
             {columns.map((col) => (
               <Column
                 key={col.id}
@@ -158,7 +163,12 @@ export function Board({ projectId }: Props) {
             ))}
             {columns.length === 0 && (
               <div className="text-sm text-muted-foreground">
-                No columns yet. Click "Add column" to get started.
+                <span className="sm:hidden">
+                  No columns yet. Tap + above to add a column.
+                </span>
+                <span className="hidden sm:inline">
+                  No columns yet. Click "Add column" to get started.
+                </span>
               </div>
             )}
           </div>

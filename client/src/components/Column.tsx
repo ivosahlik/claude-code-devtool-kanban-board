@@ -118,7 +118,7 @@ export function Column({
     <div
       ref={setNodeRef}
       className={cn(
-        "flex h-full max-h-full w-72 shrink-0 flex-col overflow-hidden rounded-lg border bg-muted/40 p-3 transition-colors",
+        "flex h-full max-h-full w-[calc(100vw-3rem)] snap-start snap-always sm:w-72 shrink-0 flex-col overflow-hidden rounded-lg border bg-muted/40 p-3 transition-colors",
         isOver && "bg-muted ring-2 ring-ring",
       )}
     >
