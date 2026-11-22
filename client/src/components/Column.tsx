@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import type { Card as CardType, Column as ColumnType } from "@/lib/api";
@@ -37,6 +37,9 @@ export function Column({
   const [renameOpen, setRenameOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CardType | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
+  // Set on Escape so focus returns to "Add card" instead of the page body.
+  const refocusAddButtonRef = useRef(false);
   const addingRef = useRef(false);
   // Titles waiting to be created, sent one at a time in the order they were entered.
   const queueRef = useRef<string[]>([]);
@@ -56,6 +59,13 @@ export function Column({
     if (!confirmed) return;
     await onDeleteColumn(column.id);
   };
+
+  useEffect(() => {
+    if (!adding && refocusAddButtonRef.current) {
+      refocusAddButtonRef.current = false;
+      addButtonRef.current?.focus();
+    }
+  }, [adding]);
 
   const openAdd = () => {
     addingRef.current = true;
@@ -90,10 +100,11 @@ export function Column({
 
   const handleAddKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Escape") {
+      refocusAddButtonRef.current = true;
       closeAdd();
       return;
     }
-    if (e.key !== "Enter") return;
+    if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
     e.preventDefault();
     setCreateError(false);
     const title = draft.trim();
@@ -170,6 +181,7 @@ export function Column({
         </div>
       ) : (
         <Button
+          ref={addButtonRef}
           variant="ghost"
           size="sm"
           className="mt-2 shrink-0 justify-start text-muted-foreground hover:text-foreground"
