@@ -11,6 +11,7 @@ import {
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { errorMessage } from "@/lib/api";
 
 type Props = {
   open: boolean;
@@ -37,11 +38,13 @@ export function CardDialog({
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Captured on open so the message keeps the saved title while the dialogs close.
   const [confirmTitle, setConfirmTitle] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
       setTitle(initialTitle);
       setDescription(initialDescription);
+      setError(null);
     }
   }, [open, initialTitle, initialDescription]);
 
@@ -49,9 +52,12 @@ export function CardDialog({
     e.preventDefault();
     if (!title.trim()) return;
     setSubmitting(true);
+    setError(null);
     try {
       await onSubmit(title.trim(), description);
       onOpenChange(false);
+    } catch (e) {
+      setError(errorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -74,7 +80,10 @@ export function CardDialog({
             <Input
               id="card-title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                setError(null);
+              }}
               autoFocus
               required
             />
@@ -86,10 +95,18 @@ export function CardDialog({
             <Textarea
               id="card-description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                setError(null);
+              }}
               rows={4}
             />
           </div>
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <DialogFooter className="sm:justify-between">
             <div>
               {mode === "edit" && onDelete && (
@@ -97,6 +114,7 @@ export function CardDialog({
                   type="button"
                   variant="destructive"
                   onClick={() => {
+                    setError(null);
                     setConfirmTitle(initialTitle);
                     setConfirmOpen(true);
                   }}
