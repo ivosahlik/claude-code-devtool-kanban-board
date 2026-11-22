@@ -44,7 +44,7 @@ Types are duplicated in `client/src`, `server/src/types.ts` and `cli/src/types.t
 
 - Projects: list, create, rename, delete (deleting a project deletes its board)
 - Columns per project: create, rename, delete (deleting a column deletes its cards; remaining columns are re-ordered)
-- Cards with title + description: create, edit, delete
+- Cards with title + description: create from an inline title input at the bottom of the column (Enter adds, Escape or clicking away closes), add descriptions and edit or delete in the edit dialog
 - Drag-and-drop to move and reorder cards, with optimistic UI updates reconciled against the server response
 - Hash routing: `#/projects/<id>` shows a board, anything else shows the project list
 - Per-page browser tab titles: `Projects · Kanban` on the list, `<project name> · Kanban` on a board, `Kanban` while a board loads

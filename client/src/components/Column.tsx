@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import type { Card as CardType, Column as ColumnType } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card } from "./Card";
 import { CardDialog } from "./CardDialog";
 import { ColumnDialog } from "./ColumnDialog";
@@ -30,9 +31,19 @@ export function Column({
   onRenameColumn,
   onDeleteColumn,
 }: Props) {
-  const [createOpen, setCreateOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [createError, setCreateError] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CardType | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const addButtonRef = useRef<HTMLButtonElement>(null);
+  // Set on Escape so focus returns to "Add card" instead of the page body.
+  const refocusAddButtonRef = useRef(false);
+  const addingRef = useRef(false);
+  // Titles waiting to be created, sent one at a time in the order they were entered.
+  const queueRef = useRef<string[]>([]);
+  const sendingRef = useRef(false);
 
   const { setNodeRef, isOver } = useDroppable({
     id: `col-${column.id}`,
@@ -47,6 +58,60 @@ export function Column({
     );
     if (!confirmed) return;
     await onDeleteColumn(column.id);
+  };
+
+  useEffect(() => {
+    if (!adding && refocusAddButtonRef.current) {
+      refocusAddButtonRef.current = false;
+      addButtonRef.current?.focus();
+    }
+  }, [adding]);
+
+  const openAdd = () => {
+    addingRef.current = true;
+    setAdding(true);
+  };
+
+  const closeAdd = () => {
+    addingRef.current = false;
+    setAdding(false);
+    setDraft("");
+    setCreateError(false);
+  };
+
+  const sendQueue = async () => {
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    while (queueRef.current.length > 0) {
+      const title = queueRef.current.shift()!;
+      try {
+        await onCreateCard(column.id, title, "");
+      } catch {
+        queueRef.current = [];
+        if (addingRef.current) {
+          setDraft(title);
+          setCreateError(true);
+          inputRef.current?.focus();
+        }
+      }
+    }
+    sendingRef.current = false;
+  };
+
+  const handleAddKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Escape") {
+      refocusAddButtonRef.current = true;
+      closeAdd();
+      return;
+    }
+    if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
+    e.preventDefault();
+    setCreateError(false);
+    const title = draft.trim();
+    if (!title) return;
+    setDraft("");
+    queueRef.current.push(title);
+    void sendQueue();
   };
 
   return (
@@ -92,22 +157,40 @@ export function Column({
         ))}
       </div>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mt-2 shrink-0 justify-start text-muted-foreground hover:text-foreground"
-        onClick={() => setCreateOpen(true)}
-      >
-        <Plus className="h-4 w-4" />
-        Add card
-      </Button>
-
-      <CardDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        mode="create"
-        onSubmit={(title, description) => onCreateCard(column.id, title, description)}
-      />
+      {adding ? (
+        <div className="mt-2 shrink-0">
+          <Input
+            ref={inputRef}
+            autoFocus
+            value={draft}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              setCreateError(false);
+            }}
+            onKeyDown={handleAddKeyDown}
+            onBlur={closeAdd}
+            aria-label="Card title"
+            placeholder="Card title, press Enter to add"
+            className="bg-background"
+          />
+          {createError && (
+            <p role="alert" className="mt-1 text-xs text-destructive">
+              Could not add card
+            </p>
+          )}
+        </div>
+      ) : (
+        <Button
+          ref={addButtonRef}
+          variant="ghost"
+          size="sm"
+          className="mt-2 shrink-0 justify-start text-muted-foreground hover:text-foreground"
+          onClick={openAdd}
+        >
+          <Plus className="h-4 w-4" />
+          Add card
+        </Button>
+      )}
 
       <CardDialog
         open={editingCard !== null}

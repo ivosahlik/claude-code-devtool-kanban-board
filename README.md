@@ -15,7 +15,7 @@ npm run dev
 ## Features
 
 - Columns: create / rename / delete
-- Cards:   create / edit / delete
+- Cards:   create / edit / delete, with inline quick-add at the bottom of each column
 - Drag-and-drop cards between columns
 - State persisted to `server/data/db.json`
 
