@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import type { Card as CardType, Column as ColumnType } from "@/lib/api";
+import { errorMessage, type Card as CardType, type Column as ColumnType } from "@/lib/api";
+import { useErrorNotice } from "@/hooks/useErrorNotice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "./Card";
@@ -9,6 +10,12 @@ import { CardDialog } from "./CardDialog";
 import { ColumnDialog } from "./ColumnDialog";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { cn } from "@/lib/utils";
+
+// Tells the user how many queued quick-add titles were dropped after a failed create.
+function droppedSuffix(dropped: number) {
+  if (dropped === 0) return "";
+  return dropped === 1 ? " (1 more was not added)" : ` (${dropped} more were not added)`;
+}
 
 type Props = {
   column: ColumnType;
@@ -34,7 +41,8 @@ export function Column({
 }: Props) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
-  const [createError, setCreateError] = useState(false);
+  // Set when a quick-add fails with the input open: how many queued titles were dropped.
+  const [createError, setCreateError] = useState<number | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editingCard, setEditingCard] = useState<CardType | null>(null);
@@ -46,6 +54,7 @@ export function Column({
   // Titles waiting to be created, sent one at a time in the order they were entered.
   const queueRef = useRef<string[]>([]);
   const sendingRef = useRef(false);
+  const notify = useErrorNotice();
 
   const { setNodeRef, isOver } = useDroppable({
     id: `col-${column.id}`,
@@ -75,7 +84,7 @@ export function Column({
     addingRef.current = false;
     setAdding(false);
     setDraft("");
-    setCreateError(false);
+    setCreateError(null);
   };
 
   const sendQueue = async () => {
@@ -85,12 +94,15 @@ export function Column({
       const title = queueRef.current.shift()!;
       try {
         await onCreateCard(column.id, title, "");
-      } catch {
+      } catch (e) {
+        const dropped = queueRef.current.length;
         queueRef.current = [];
         if (addingRef.current) {
           setDraft(title);
-          setCreateError(true);
+          setCreateError(dropped);
           inputRef.current?.focus();
+        } else {
+          notify(`Could not add card "${title}": ${errorMessage(e)}${droppedSuffix(dropped)}`);
         }
       }
     }
@@ -105,7 +117,7 @@ export function Column({
     }
     if (e.key !== "Enter" || e.nativeEvent.isComposing) return;
     e.preventDefault();
-    setCreateError(false);
+    setCreateError(null);
     const title = draft.trim();
     if (!title) return;
     setDraft("");
@@ -164,7 +176,7 @@ export function Column({
             value={draft}
             onChange={(e) => {
               setDraft(e.target.value);
-              setCreateError(false);
+              setCreateError(null);
             }}
             onKeyDown={handleAddKeyDown}
             onBlur={closeAdd}
@@ -172,9 +184,9 @@ export function Column({
             placeholder="Card title, press Enter to add"
             className="bg-background"
           />
-          {createError && (
+          {createError !== null && (
             <p role="alert" className="mt-1 text-xs text-destructive">
-              Could not add card
+              Could not add card{droppedSuffix(createError)}
             </p>
           )}
         </div>
