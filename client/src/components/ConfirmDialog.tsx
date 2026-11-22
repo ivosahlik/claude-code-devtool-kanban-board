@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,8 +30,6 @@ export function ConfirmDialog({
 }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Radix returns focus to a DialogTrigger, which callers don't use; restore it to the opener instead.
-  const openerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     if (open) setError(null);
@@ -58,15 +56,7 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent
-        onOpenAutoFocus={() => {
-          openerRef.current = document.activeElement as HTMLElement | null;
-        }}
-        onCloseAutoFocus={(e) => {
-          e.preventDefault();
-          openerRef.current?.focus();
-        }}
-      >
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>

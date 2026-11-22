@@ -23,36 +23,61 @@ export const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
+// Renders nothing. Its layout effect runs before any `autoFocus` in the
+// dialog's children, so it sees the element that opened the dialog.
+function RecordOpener({ openerRef }: { openerRef: React.RefObject<HTMLElement | null> }) {
+  React.useLayoutEffect(() => {
+    openerRef.current = document.activeElement as HTMLElement | null;
+  }, [openerRef]);
+  return null;
+}
+
 export const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, onInteractOutside, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      onInteractOutside={(e) => {
-        // Clicking an error notice (e.g. its Dismiss button) must not close
-        // the dialog and lose what was typed.
-        if ((e.target as Element | null)?.closest?.("[data-error-notice]")) {
+>(({ className, children, onInteractOutside, onCloseAutoFocus, ...props }, ref) => {
+  // Radix returns focus to a DialogTrigger, which callers don't use; every
+  // dialog returns it to its opener here instead.
+  const openerRef = React.useRef<HTMLElement | null>(null);
+
+  return (
+    <DialogPortal>
+      <DialogOverlay />
+      <DialogPrimitive.Content
+        ref={ref}
+        onInteractOutside={(e) => {
+          // Clicking an error notice (e.g. its Dismiss button) must not close
+          // the dialog and lose what was typed.
+          if ((e.target as Element | null)?.closest?.("[data-error-notice]")) {
+            e.preventDefault();
+          }
+          onInteractOutside?.(e);
+        }}
+        onCloseAutoFocus={(e) => {
+          onCloseAutoFocus?.(e);
+          const opener = openerRef.current;
+          openerRef.current = null;
+          // An opener removed by the dialog (e.g. a deleted card) keeps Radix's default.
+          if (e.defaultPrevented || !opener?.isConnected) return;
           e.preventDefault();
-        }
-        onInteractOutside?.(e);
-      }}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-));
+          opener.focus();
+        }}
+        className={cn(
+          "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
+          className,
+        )}
+        {...props}
+      >
+        <RecordOpener openerRef={openerRef} />
+        {children}
+        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
+  );
+});
 DialogContent.displayName = DialogPrimitive.Content.displayName;
 
 export const DialogHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
