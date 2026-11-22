@@ -52,6 +52,7 @@ Types are duplicated in `client/src`, `server/src/types.ts` and `cli/src/types.t
 - A "Project not found" state with a back button when a board URL points at an unknown or deleted project
 - Layout at phone width (below 640px): the board shows one column per screen, snaps between columns on swipe, and truncates long project names in the header
 - Error feedback for failed actions: dialogs (including the delete confirmations) stay open with the input and show the error inline; card moves and reloads after an action show a dismissible red notice at the bottom-right (a failed move puts the card back)
+- Focus return: closing a dialog returns focus to the control that opened it, and dismissing a focused error notice (or letting it time out) returns focus to where it was
 - CLI covering the same operations against the running server
 
 ## API Routes
