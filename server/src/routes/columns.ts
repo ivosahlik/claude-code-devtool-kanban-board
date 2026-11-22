@@ -30,7 +30,7 @@ columnsRouter.patch("/:id", async (req, res) => {
 
   const updated = await mutateBoard(projectId, (board) => {
     const col = board.columns.find((c) => c.id === id);
-    if (!col) return null;
+    if (!col) return false;
     col.title = title.trim();
     return col;
   });
