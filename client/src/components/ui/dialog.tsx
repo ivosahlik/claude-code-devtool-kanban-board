@@ -23,12 +23,14 @@ export const DialogOverlay = React.forwardRef<
 ));
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
-// Renders nothing. Its layout effect runs before any `autoFocus` in the
-// dialog's children, so it sees the element that opened the dialog.
+// Renders nothing. It reads the focused element while the dialog content first
+// renders, before React commits it and runs any `autoFocus` in it (an effect
+// would see the input instead when StrictMode runs it a second time).
 function RecordOpener({ openerRef }: { openerRef: React.RefObject<HTMLElement | null> }) {
+  const [opener] = React.useState(() => document.activeElement as HTMLElement | null);
   React.useLayoutEffect(() => {
-    openerRef.current = document.activeElement as HTMLElement | null;
-  }, [openerRef]);
+    openerRef.current = opener;
+  }, [openerRef, opener]);
   return null;
 }
 
