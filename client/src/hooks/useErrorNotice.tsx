@@ -34,6 +34,7 @@ export function ErrorNoticeProvider({ children }: { children: ReactNode }) {
     <ErrorNoticeContext.Provider value={notify}>
       {children}
       <div
+        data-error-notice
         role="status"
         aria-live="polite"
         className="pointer-events-none fixed bottom-4 right-4 z-[100] flex w-[calc(100%-2rem)] max-w-sm flex-col gap-2"
