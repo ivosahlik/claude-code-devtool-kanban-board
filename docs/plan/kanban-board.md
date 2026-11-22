@@ -51,6 +51,7 @@ Types are duplicated in `client/src`, `server/src/types.ts` and `cli/src/types.t
 - Per-page browser tab titles: `Projects · Kanban` on the list, `<project name> · Kanban` on a board, `Kanban` while a board loads
 - A "Project not found" state with a back button when a board URL points at an unknown or deleted project
 - Layout at phone width (below 640px): the board shows one column per screen, snaps between columns on swipe, and truncates long project names in the header
+- Error feedback for failed actions: dialogs stay open with the input and show the error inline; deletes, card moves and reloads show a dismissible red notice at the bottom-right (a failed move puts the card back)
 - CLI covering the same operations against the running server
 
 ## API Routes
