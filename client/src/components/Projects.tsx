@@ -73,7 +73,7 @@ export function Projects() {
 
       <div className="flex-1 overflow-y-auto p-6">
         {error && (
-          <div className="mb-4 text-sm text-destructive">{error}</div>
+          <div className="mb-4 text-sm text-destructive-text">{error}</div>
         )}
         {projects === null ? (
           <div className="text-sm text-muted-foreground">Loading…</div>
@@ -113,7 +113,7 @@ export function Projects() {
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7 text-destructive hover:text-destructive"
+                    className="h-7 w-7 text-destructive-text hover:text-destructive-text"
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeleteTarget(p);
@@ -218,7 +218,7 @@ function ProjectDialog({ state, onOpenChange, onSubmit }: ProjectDialogProps) {
             />
           </div>
           {error && (
-            <p role="alert" className="text-sm text-destructive">
+            <p role="alert" className="text-sm text-destructive-text">
               {error}
             </p>
           )}
