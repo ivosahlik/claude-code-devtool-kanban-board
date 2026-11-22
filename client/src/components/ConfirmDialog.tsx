@@ -72,7 +72,7 @@ export function ConfirmDialog({
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <p role="alert" className="text-center text-sm text-destructive sm:text-left">
             {error}
           </p>
         )}
